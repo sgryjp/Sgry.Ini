@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle( "Sgry.Ini" )]
-[assembly: AssemblyDescription( "INI File Parser" )]
+[assembly: AssemblyDescription( "A single file INI file parser written in C#." )]
 [assembly: AssemblyConfiguration( "" )]
 [assembly: AssemblyCompany( "" )]
 [assembly: AssemblyProduct( "Sgry.Ini" )]

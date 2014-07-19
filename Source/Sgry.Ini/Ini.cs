@@ -400,9 +400,9 @@ namespace Sgry.Ini
 				string propName, value;
 
 				line = line.TrimStart();
-				if( line.StartsWith(";") )
+				if( line == String.Empty || line.StartsWith(";") )
 				{
-					// Comment line
+					// Empty line or comment line
 				}
 				else if( TryParseSection(line, out sectionName) )
 				{
@@ -488,6 +488,8 @@ namespace Sgry.Ini
 
 		static bool TryParseSection( string line, out string name )
 		{
+			Debug.Assert( line != String.Empty );
+
 			int begin, end;
 			name = null;
 
@@ -520,6 +522,8 @@ namespace Sgry.Ini
 
 		static bool TryParseProperty( string line, out string name, out string value )
 		{
+			Debug.Assert( line != String.Empty );
+
 			name = value = null;
 
 			// Find where the property name begins

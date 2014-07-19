@@ -334,7 +334,12 @@ namespace Sgry.Ini.Tests
 		[Test]
 		public void Load()
 		{
-			var iniData = "key1=value1\n;key2=value2\n[section]\nKEY1 =\tVALUE1\nKEY2=VALUE2\n";
+			var iniData = @"
+key1=value1
+;key2=value2
+[section]
+KEY1 =	VALUE1
+KEY2=VALUE2";
 			var ini = new IniDocument();
 			var reader = new StringReader(iniData);
 

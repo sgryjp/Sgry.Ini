@@ -1,129 +1,150 @@
-概要
-====
-このページではSgry.IniというINIファイル形式を扱うC#のクラスを公開しています。非
-常に制約の緩いzlibライセンスでの配布であること、1ソースファイルで記述されている
-ことから、既存プロジェクトへの組み込みも簡単に行えると思います。
+Abstract
+========
+Sgry.Ini is an INI file format parser written in pure C#. It is written
+in a single source file under less-restrictive zlib/libpng license.
 
-INI形式について
-===============
-このライブラリが扱うINI形式について、簡単に説明をしておきます。INI形式は厳密な
-フォーマット仕様こそ存在しませんが、非常に広くに使われているファイルフォーマッ
-トです。INI形式では、「AはBである」という情報を次のような形式のテキストで表しま
-す。
+Supported INI Format
+====================
+For detail about the INI data format itself, please refer to Wikipedia:
 
-    A=B
+- [INI file (English)](http://en.wikipedia.org/wiki/INI_file)
 
-この一行で「イコール記号の左側の値が、イコール記号の右側の値である」という情報
-になります。たとえば「名前が山本である」という情報は次のようになります。
+Below is how this class parses given INI data:
 
-名前=山本
-なおこれは必ず一行に収まっている必要があり、改行を含んだデータを書き込むことは
-できません。
+- Empty lines
+  - Ignores
+- Comment line
+  - A line starting with semi-colon (;) is recognized as comment
+  - Ignores whitespaces at the beginning of each line
+  - No comments allowed after a property definition line nor a section starting
+    line
+- Section starting line
+  - A line starting with '[' and ends with ']' is recognized as the start of a
+    new section
+  - Ignores whitespaces at the beginning and the end of each line
+  - Substring between the first '[' and ']' becomes the name of the section
+- Property definition line
+  - A line which is none of the above, and which includes an equal sign '=' is
+    recognized as a property definition line
+  - Substring between line-beginning and the first equal sign '=' is recognized
+    as the name of the property
+  - Substring after the first equal sign '=' in a property line is recognized
+    as the value of the property
+  - Whitespaces surrounding property name is ignored
+- Other
+  - Can specify whether to ignore case of section and/or property names
+  - Can recognize so-called "global properties"
+    - To access use them, specify an empty string for section name.
+  - Does not support escape characters such as "\n" nor "\x0041"
+  - Does not support custom key/value delimiter (only '=' is supported)
 
-このライブラリでは、こうした一つの情報をINI形式の「エントリー」と呼びます。また
-イコール記号の左側の値を「エントリー名」、イコール記号の右側の値を「エントリー
-値」または単に「値」と呼びます。INI形式とは、基本的にはエントリーが集まったもの
-になります。
 
-さて、当然ですが、この形式ですと同じエントリー名のエントリーを複数定義すること
-はできません。そこで複数のエントリーをまとめてグループ化する仕組みが使われてい
-ます。まず具体例を先に挙げます。
+Feature
+=======
+Load from or save to files and strings
+--------------------------------------
+To load analyze INI document content, use IniDocument.Load method. Load method
+reads data from System.IO.TextReader so you can specify a
+System.IO.StreamReader to read data in a file, or a System.IO.StringReader to
+read data on the memory (string variable). See example below:
 
-    [User1]
-    FamilyName=YAMAMOTO
-    FirstName=Suguru
-    Sex=Male
-    [User2]
-    FamilyName=YAMADA
-    FirstName=Taro
-    Sex=Male
+    var ini = new IniDocument();
+    
+    // Load INI data in a file
+    using( var file = new StreamReader("data.ini", Encoding.UTF8) )
+        ini.Load( file );
+    
+    // Load INI data on the memory (String object)
+    var str = "...(INI data here)...";
+    ini.Load( new StringReader(str) );
 
-ここで大カッコで囲われた見出しのような行があることに気づくと思いますが、実際に
-それらは見出しの意味を持っています。つまり、ある見出しの行から後ろにあるエント
-リーは、その見出しのセクション（章）で書かれていると言えます。そして次の見出し
-の行が見つかったら、その後ろにあるエントリーからは新しく見つかった見出しのセク
-ション（章）で書かれていると言えます。
+To serialize INI document content, use IniDocument.Save method. Save method
+writes serialized data to a System.IO.TextWriter. Next is an example code:
 
-このライブラリでは、見出しの意味を持つ行を「セクション開始行」と呼び、セクショ
-ン開始行から次のセクション開始行までの区間を「セクション」と呼びます。またセク
-ション開始行の大カッコの中身を、そこから始まるセクションの名前として使用しま
-す。したがって先ほどの例でいえばセクションUser1のFirstNameはSuguruであり、セク
-ションUser2のFirstNameはTaroとなります。
+    var ini = new IniDocument();
+    
+    // Sets some values
+    ini.Set("", "foo", "bar");
+    ini.Set("[section]", "Foo", "Bar");
+    
+    // Save INI data to a file
+    using( var file = new StreamWriter("data.ini", false, Encoding.UTF8) )
+    {
+        file.NewLine = "\r\n";
+        ini.Save( file );
+    }
+    
+    // Save (serialize) INI data on the memory (as a StringBuilder object)
+    var buf = new StringBuilder();
+    var writer = new StringWriter( buf );
+    writer.NewLine = "\r\n";
+    ini.Save( new StringWriter(buf) );
 
-機能
-====
-ファイルやストリームからデータを読み出す
-----------------------------------------
-ファイルやメモリなどにあるINIデータを解析して内容をロードする場合はLoadメソッド
-を使います。またINIデータのロード元としてSystem.IO.TextReaderを、INIデータの出
-力先としてSystem.IO.TextWriterを指定できるため、ファイルだけでなくメモリ上の
-バッファなどに対しても読み書き可能です。ごく単純な例を次に示します。
+Note that IniDocument.Set method does not write sections without a property. If
+you need to write such section, you need to implement your own serialization
+logic to do it by using IniDocument.Sections property.
 
-    Ini ini = new Ini();
-    ini.Load( "data.ini", Encoding.UTF8 );
 
-値の取り出し
-------------
-ロードしたデータの読み出しはGetメソッドを使います。GetメソッドではString型、
-Bool型、Double型といった基本的なデータを直接扱えます。次に例を示します。
+Getting values
+--------------
+Getting values can be done with IniDocument.Get method. See example below:
 
-    /* ファイル data.ini の内容:
+    /* Content of the file "data.ini":
     [Profile]
     Name=Suguru
     IsGeek=True
+    Age=31
     */
     
-    // ファイルの内容をロード
-    Ini ini = new Ini();
-    ini.Load( "data.ini" );
+    // Load and parse INI document "data.ini"
+    var ini = new IniDocument();
+    using( var file = new StreamReader("data.ini", Encoding.UTF8) )
+        ini.Load( file );
     
-    // データを取り出す
+    // Get property values in various types
     ini.Get( "Profile", "Name", null ); // "Suguru" が返る
     ini.Get( "Profile", "IsGeek", false ); // true が返る
-    ini.Get( "Profile", "Age", 20 ); // Age は INI 中に無いので 20 が返る
+    ini.GetInt( "Profile", "Age", 0, Int32.MaxValue, 0 ); // 31 が返る
+    ini.Get( "Profile", "Address", "unknown" ); // "unknown" が返る
 
-Getメソッドは、Iniファイルの主な用途が設定ファイルであることを考えて第3引数で
-「デフォルト値」を指定できるようになっています。これによって「値が見つからなけ
-ればデフォルト値を設定する」という設定読み出し処理で頻繁に出てくる面倒なコー
-ディングの手間が軽減される・・・かもしれません。
+Get method takes "default value" as the third parameter. This value will be
+returned when the specified property was not found. Also, there are TryGet
+method which returns whether the property was found or not.
 
-なお数値の取得用には専用のメソッドGetIntを用意しています。もちろんGetメソッドで
-も数値は取得できますが、GetIntは数値の取得と同時に範囲チェックも行ってくれます。
-設定項目の場合、たとえば日付のデータは1以上31以下でなければいけませんし、ウィン
-ドウの幅は正の数でなければいけません。こうしたデータを読み出す場合にGetIntを使
-えば「許容する最小値と最大値」を指定できるので、読み出した後でチェックする手間
-を省略できます。
+If you read a property whose value is an integer, GetInt method may be useful
+because it does not only get the value but also checks whether the value is in
+a specified range. 
 
-ちなみに、厳密にはGetメソッドには文字列用のGetメソッドと値型を汎用的に扱う
-Get<T>メソッドがありますが、ただ普通に使う場合はGetという2つのメソッドがあるこ
-とを意識する必要は無いはずです。システム標準の基本的な型でない独自の型などを使
-う場合は若干話がややこしくなるかもしれませんので注意してください。
 
-値の変更や追加
---------------
-INIデータの内容を変更する場合はSetメソッドを使います。指定したセクションの、指
-定したエントリ名を持った値がすでに存在する場合、その値はSetメソッドで指定した値
-に書き換えられます。逆に存在しない場合、新たに指定したエントリが作成されて、そ
-こに指定した値が設定されます。
+Adding or changing values
+-------------------------
+To add a new property or to change an existing property's value, use
+IniDocument.Set method. If specified property does not exist, a new property
+will be created in the IniDocument. Otherwise value of the existing property
+will be overwritten. Note that Set method can take any objects as value. See
+example below:
 
-値として使うオブジェクトの型は、何でもOKです。内部でそのオブジェクトのToString
-メソッドを呼び出して、その結果文字列を使うからです。
-
-値の削除
---------
-INIデータ中の値を削除するにはRemoveメソッドを使います。Removeメソッドには削除し
-たい値（エントリー）があるセクションの名前とエントリー名を指定します。
-
-ファイルやストリームにデータを保存
-----------------------------------
-INIデータをファイルなどのストリームに保存するにはSaveメソッドを使います。Saveメ
-ソッドにはTextWriterを与えるか、ファイルパスを与えます。次に例を示します。
-
-    // data.ini というファイルに UTF-8 で保存
-    ini.Save( "data.ini", Encoding.UTF8 );
+    var ini = new IniDocument();
+    ini.Set( "Profile", "Name", "Suguru" );
+    ini.Set( "Profile", "Name", "Suguru Yamamoto" );
+    ini.Set( "Profile", "Age", 31 );
+    ini.Save( System.Console.Out );
     
-    // メモリ上のバッファ(StringBuilder)に INI 形式テキストとして書き込む
-    StringBuilder buf = new StringBuilder();
-    StringWriter writer = new StringWriter( buf );
-    ini.Save( writer );
-    buf.ToString() // INI 形式テキストが返る
+    // The code above outputs text below in the console window:
+    //[Profile]
+    //Name=Suguru Yamamoto
+    //Age=31
+
+
+Removing properties and sections
+--------------------------------
+To remove sections or properties in a IniDocument, use IniDocument.Remove
+method.
+
+
+Before using this library
+=========================
+This library is distributed under the [zlib/libpng license](LICENSE.md).
+Note that zlib/libpng license is less restrictive for redistribution in the
+form of source files (not built binary files). If you want to use this library
+in a form of souce files, just pick up Source/Sgry.Ini/Ini.cs.

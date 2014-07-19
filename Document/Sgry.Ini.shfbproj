@@ -15,8 +15,8 @@
     <!-- SHFB properties -->
     <FrameworkVersion>.NET Framework 2.0</FrameworkVersion>
     <OutputPath>Help\</OutputPath>
-    <HtmlHelpName>Sgry.Ini-2.1.1-api</HtmlHelpName>
-    <Language>ja-JP</Language>
+    <HtmlHelpName>Sgry.Ini-3.0.0-api</HtmlHelpName>
+    <Language>en-US</Language>
     <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
     <HelpFileFormat>HtmlHelp1</HelpFileFormat>
     <IndentHtml>False</IndentHtml>
@@ -35,8 +35,8 @@
     <HelpTitle>Sgry.Ini API Reference</HelpTitle>
     <ContentPlacement>AboveNamespaces</ContentPlacement>
     <DocumentationSources>
-      <DocumentationSource sourceFile="..\Source\bin\Release\Sgry.Ini.dll" xmlns="" />
-      <DocumentationSource sourceFile="..\Source\bin\Release\Sgry.Ini.xml" xmlns="" />
+      <DocumentationSource sourceFile="..\Source\Sgry.Ini\bin\Release\Sgry.Ini.dll" xmlns="" />
+      <DocumentationSource sourceFile="..\Source\Sgry.Ini\bin\Release\Sgry.Ini.xml" xmlns="" />
     </DocumentationSources>
     <FooterText>%28C%29 2014 Suguru Yamamoto</FooterText>
     <CopyrightText>See updates on GitHub.</CopyrightText>

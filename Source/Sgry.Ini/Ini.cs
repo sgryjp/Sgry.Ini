@@ -1,5 +1,5 @@
 ﻿// See LICENSE.md for license terms of usage.
-// v2.0.0.
+// v3.0.0.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
